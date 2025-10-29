@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CheckGuard - Fraud Prevention System</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>CheckGuard - Fraud Prevention System</h1>
+
+        <div class="search-box">
+            <h2>Check Phone Number</h2>
+            <div class="form-group">
+                <input type="tel" 
+                       id="searchPhone" 
+                       placeholder="Enter phone to check (e.g., +1234567890)"
+                       oninput="validatePhoneInput(this)">
+                <span class="error-message">Please enter a valid international phone number</span>
+            </div>
+            <div class="button-container">
+                <button onclick="searchPhone()" disabled>Check Number</button>
+            </div>
+            <div id="searchResult" class="search-result"></div>
+        </div>
+
+        <form method="POST" action="/add" id="blockForm">
+            <div class="form-group">
+                <label>Phone Number*</label>
+                <input type="tel" 
+                       name="phone_number" 
+                       id="phoneInput"
+                       placeholder="Enter phone number (e.g., +1234567890)"
+                       oninput="validatePhoneInput(this)"
+                       required>
+                <span id="phoneError" class="error-message">Please enter a valid international phone number (10-15 digits)</span>
+            </div>
+            <div class="form-group">
+                <label>Reason for Blocking*</label>
+                <select name="reason" required>
+                    <option value="">Select reason...</option>
+                    <option value="fraud_check">Fraudulent Check</option>
+                    <option value="false_id">False Identification</option>
+                    <option value="multiple_attempts">Multiple Store Attempts</option>
+                    <option value="other">Other (specify in notes)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Store Location*</label>
+                <input type="text" name="store_location" required>
+            </div>
+            <div class="form-group">
+                <label>Check Amount*</label>
+                <input type="number" step="0.01" name="check_amount" required min="0.01">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="notes"></textarea>
+            </div>
+            <div class="button-container">
+                <button type="submit">Block Number</button>
+            </div>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Phone Number</th>
+                    <th>Blocked Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .}}
+                <tr>
+                    <td>{{.PhoneNumber}}</td>
+                    <td>{{.CreatedAt}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
