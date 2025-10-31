@@ -1,3 +1,12 @@
+// main.go — HTTP handlers and server startup for CheckGuard.
+//
+// This file contains the primary HTTP handlers:
+//   - homeHandler: renders the list + form
+//   - addNumberHandler: validates input and upserts into DB
+//   - searchHandler: looks up a phone number and returns JSON
+//
+// Business logic and DB helpers are implemented in other files
+// (db.go, validators.go). Keep handlers focused on request/response.
 package main
 
 import (
@@ -7,29 +16,11 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
-	"regexp"
 	"strconv"
 	"strings"
-
-	_ "github.com/lib/pq" // Re-added import for PostgreSQL driver
 )
 
-//  Database connection settings
-
-const (
-	DB_USER     = "postgres"
-	DB_PASSWORD = "rizzu"
-	DB_NAME     = "blocklistdb"
-	DB_HOST     = "localhost"
-	DB_PORT     = "5432"
-)
-
-// ------------------------------
-//
-//	Struct to represent a phone record
-//
-// ------------------------------
+// Struct to represent a phone record
 type BlockedNumber struct {
 	ID            int     `json:"id"`
 	PhoneNumber   string  `json:"phone_number"`
@@ -42,44 +33,7 @@ type BlockedNumber struct {
 }
 
 // ------------------------------
-//
-//	Global DB connection variable
-//
-// ------------------------------
-var db *sql.DB
-
-// Update phone validation regex to match database constraint
-var phoneRegex = regexp.MustCompile(`^\+[1-9][0-9]{9,14}$`)
-
-func validatePhoneNumber(phone string) bool {
-	return phoneRegex.MatchString(phone)
-}
-
-func formatPhoneNumber(phone string) string {
-	// URL decode the phone number
-	decoded, err := url.QueryUnescape(phone)
-	if err != nil {
-		log.Printf("URL decode error: %v, using original: %s", err, phone)
-		decoded = phone
-	}
-
-	// Remove all non-digit characters except '+'
-	reg := regexp.MustCompile(`[^\d+]`)
-	cleaned := reg.ReplaceAllString(decoded, "")
-
-	// Only add + if missing, don't modify the number otherwise
-	if !strings.HasPrefix(cleaned, "+") {
-		cleaned = "+" + cleaned
-	}
-
-	log.Printf("Formatted phone: %s", cleaned)
-	return cleaned
-}
-
-// ------------------------------
-//
-//	Home handler: display form + list
-//
+// Home handler: display form + list
 // ------------------------------
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl, err := template.ParseFiles("templates/index.html")
@@ -106,9 +60,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ------------------------------
-//
-//	Add phone number handler
-//
+// Add phone number handler
 // ------------------------------
 func addNumberHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -139,7 +91,7 @@ func addNumberHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	checkAmountVal = sql.NullFloat64{Float64: amount, Valid: true}
 
-	// Updated SQL statement
+	// Updated SQL statement: incident_date = CURRENT_DATE, updated_at updated
 	stmt, err := db.Prepare(`
         INSERT INTO blocked_numbers 
         (phone_number, reason, store_location, incident_date, check_amount, notes, updated_at) 
@@ -174,9 +126,7 @@ func addNumberHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ------------------------------
-//
-//	Search handler: find a specific blocked number
-//
+// Search handler: find a specific blocked number
 // ------------------------------
 func searchHandler(w http.ResponseWriter, r *http.Request) {
 	phone := r.URL.Query().Get("phone")
@@ -246,56 +196,17 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ------------------------------
-//
-//	Initialize database schema
-//
-// ------------------------------
-func initDatabase() error {
-	createTableSQL := `
-    CREATE TABLE IF NOT EXISTS blocked_numbers (
-        id SERIAL PRIMARY KEY,
-        phone_number VARCHAR(15) UNIQUE NOT NULL CHECK (phone_number ~ '^\+[1-9][0-9]{9,14}$'),
-        reason VARCHAR(100) NOT NULL,
-        store_location VARCHAR(100) NOT NULL,
-        incident_date DATE NOT NULL,
-        check_amount NUMERIC(12,2),
-        notes VARCHAR(255),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE INDEX IF NOT EXISTS idx_phone_number ON blocked_numbers(phone_number);
-    CREATE INDEX IF NOT EXISTS idx_store_location ON blocked_numbers(store_location);`
-
-	_, err := db.Exec(createTableSQL)
-	return err
-}
-
-// ------------------------------
-//
-//	Main function (entry point)
-//
+// Main function (entry point)
 // ------------------------------
 func main() {
 	// Connect to PostgreSQL
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME)
-
-	var err error
-	db, err = sql.Open("postgres", psqlInfo)
-	if err != nil {
+	if err := ConnectDB(); err != nil {
 		log.Fatal("Error connecting to DB:", err)
 	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		log.Fatal("Cannot reach database:", err)
-	}
-
-	fmt.Println("✅ Connected to database successfully!")
+	defer CloseDB()
 
 	// Initialize database schema
-	if err := initDatabase(); err != nil {
+	if err := InitSchema(); err != nil {
 		log.Fatal("Error initializing database:", err)
 	}
 	fmt.Println("✅ Database schema initialized!")
@@ -303,6 +214,7 @@ func main() {
 	// Route setup
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/add", addNumberHandler)
+	// http.handleFunc("/remove",removeNumberHandler)
 	http.HandleFunc("/search", searchHandler)
 
 	// Serve static files (CSS/JS)

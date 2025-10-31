@@ -1,3 +1,6 @@
+-- Database schema for CheckGuard blocked_numbers table.
+-- The phone_number CHECK enforces international format starting with '+'
+-- followed by 10-15 digits and first digit after + must not be 0.
 CREATE TABLE IF NOT EXISTS blocked_numbers (
     id SERIAL PRIMARY KEY,
     phone_number VARCHAR(15) UNIQUE NOT NULL CHECK (phone_number ~ '^\+[1-9][0-9]{9,14}$'),
