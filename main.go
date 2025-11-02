@@ -194,6 +194,37 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Write(response)
 }
+func UnblockNumberHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	phone := r.URL.Query().Get("phone")
+	if phone == "" {
+		http.Error(w, "Missing phone number", http.StatusBadRequest)
+		return
+	}
+
+	phone = formatPhoneNumber(phone)
+	log.Println("Unblock request for:", phone)
+
+	result, err := db.Exec(`DELETE FROM blocked_numbers WHERE phone_number=$1`, phone)
+	if err != nil {
+		log.Println("DB error:", err)
+		http.Error(w, "DB Delete error", http.StatusInternalServerError)
+		return
+	}
+
+	rows, _ := result.RowsAffected()
+	if rows == 0 {
+		http.Error(w, "Number not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Unblocked"))
+}
 
 // ------------------------------
 // Main function (entry point)
@@ -214,7 +245,7 @@ func main() {
 	// Route setup
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/add", addNumberHandler)
-	// http.handleFunc("/remove",removeNumberHandler)
+	http.HandleFunc("/unblock", UnblockNumberHandler)
 	http.HandleFunc("/search", searchHandler)
 
 	// Serve static files (CSS/JS)

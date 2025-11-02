@@ -2,7 +2,6 @@ function validatePhoneInput(input) {
   const formattedNumber = formatPhoneNumber(input.value);
   const isValid = validatePhoneNumber(formattedNumber);
   const errorMsg = input.parentElement.querySelector(".error-message");
-  // debugger
   input.value = formattedNumber;
 
   // Get the relevant button (either submit or check button)
@@ -73,36 +72,12 @@ async function searchPhone() {
     if (response.ok) {
       const data = await response.json();
       result.innerHTML = `
-        <h3>⚠️ WARNING: Blocked Number</h3>
-        <p>Phone: ${data.phone_number}</p>
-        <p>Location: ${data.store_location}</p>
-        <p>Reason: ${data.reason}</p>
-        <p>Date: ${data.incident_date}</p>
-
-        <button id="unblockBtn">Unblock Number</button>
+      <h3>⚠️ WARNING: Blocked Number</h3>
+      <p>Phone: ${data.phone_number}</p>
+      <p>Location: ${data.store_location}</p>
+      <p>Reason: ${data.reason}</p>
+      <p>Date: ${data.incident_date}</p>
     `;
-
-      // handle unblock button click
-      document
-        .getElementById("unblockBtn")
-        .addEventListener("click", async () => {
-          if (!confirm("Are you sure you want to unblock this number?")) return;
-
-          const unblockRes = await fetch(
-            `/unblock?phone=${encodeURIComponent(data.phone_number)}`,
-            {
-              method: "DELETE",
-            }
-          );
-
-          if (unblockRes.ok) {
-            alert("✅ Number successfully unblocked!");
-            result.innerHTML = "";
-            phoneInput.value = "";
-          } else {
-            alert("❌ Failed to unblock number");
-          }
-        });
     } else if (response.status === 404) {
       result.innerHTML = "<p>Number not found in blocklist</p>";
     } else {
@@ -116,3 +91,65 @@ async function searchPhone() {
     searchBtn.disabled = false;
   }
 }
+async function unblockNumber(phone, buttonElement) {
+  if (!confirm(`Unblock number: ${phone}?`)) return;
+
+  try {
+    const response = await fetch(
+      `/unblock?phone=${encodeURIComponent(phone)}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (response.ok) {
+      // Remove only the row of this button
+      const row = buttonElement.closest("tr");
+      if (row) row.remove();
+    } else if (response.status === 404) {
+    } else {
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+function formatUSADate(dateString) {
+  const date = new Date(dateString);
+  if (isNaN(date)) return dateString;
+
+  const options = {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  };
+
+  return date.toLocaleString("en-US", options);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // phone validation
+  const phoneInputs = document.querySelectorAll('input[type="tel"]');
+  phoneInputs.forEach((input) =>
+    input.addEventListener("input", () => validatePhoneInput(input))
+  );
+
+  // Format CreatedAt column to USA format
+  document.querySelectorAll("tbody tr").forEach((row) => {
+    const dateCell = row.children[1]; // 2nd column = CreatedAt
+    if (dateCell && dateCell.textContent.includes("T")) {
+      dateCell.textContent = formatUSADate(dateCell.textContent.trim());
+    }
+  });
+
+  // unblock button click
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".unblock-btn-table");
+    if (btn) {
+      const phone = btn.getAttribute("data-phone");
+      unblockNumber(phone, btn);
+    }
+  });
+});
