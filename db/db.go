@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"database/sql"
@@ -10,8 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// package-level DB used by handlers
-var db *sql.DB
+var DB *sql.DB
 
 func envOr(key, def string) string {
 	if v := os.Getenv(key); v != "" {
@@ -20,7 +19,6 @@ func envOr(key, def string) string {
 	return def
 }
 
-// ConnectDB opens the global DB connection using environment variables or defaults.
 func ConnectDB() error {
 	user := envOr("CHECKGUARD_DB_USER", "postgres")
 	pass := envOr("CHECKGUARD_DB_PASSWORD", "rizzu")
@@ -32,18 +30,17 @@ func ConnectDB() error {
 		host, port, user, pass, name)
 
 	var err error
-	db, err = sql.Open("postgres", dsn)
+	DB, err = sql.Open("postgres", dsn)
 	if err != nil {
 		return err
 	}
 
-	// sensible pool defaults
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
+	DB.SetMaxOpenConns(25)
+	DB.SetMaxIdleConns(5)
+	DB.SetConnMaxLifetime(5 * time.Minute)
 
-	if err = db.Ping(); err != nil {
-		log.Printf("DB ping error: %v", err)
+	if err = DB.Ping(); err != nil {
+		log.Println("DB ping error:", err)
 		return err
 	}
 
@@ -51,16 +48,15 @@ func ConnectDB() error {
 	return nil
 }
 
-// CloseDB closes the global DB connection
 func CloseDB() {
-	if db != nil {
-		_ = db.Close()
+	if DB != nil {
+		_ = DB.Close()
 	}
 }
 
-// InitSchema ensures the required table and indexes exist
+// Schema initialization
 func InitSchema() error {
-	createTableSQL := `
+	sql := `
 	CREATE TABLE IF NOT EXISTS blocked_numbers (
 		id SERIAL PRIMARY KEY,
 		phone_number VARCHAR(15) UNIQUE NOT NULL CHECK (phone_number ~ '^\+[1-9][0-9]{9,14}$'),
@@ -74,7 +70,6 @@ func InitSchema() error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_phone_number ON blocked_numbers(phone_number);
 	CREATE INDEX IF NOT EXISTS idx_store_location ON blocked_numbers(store_location);`
-
-	_, err := db.Exec(createTableSQL)
+	_, err := DB.Exec(sql)
 	return err
 }

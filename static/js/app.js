@@ -73,10 +73,10 @@ async function searchPhone() {
       const data = await response.json();
       result.innerHTML = `
       <h3>⚠️ WARNING: Blocked Number</h3>
-      <p>Phone: ${data.phone_number}</p>
-      <p>Location: ${data.store_location}</p>
-      <p>Reason: ${data.reason}</p>
-      <p>Date: ${data.incident_date}</p>
+      <p>Phone: ${data?.phoneNumber}</p>
+      <p>Location: ${data?.storeLocation}</p>
+      <p>Reason: ${data?.reason}</p>
+      <p>Date: ${data?.incidentDate}</p>
     `;
     } else if (response.status === 404) {
       result.innerHTML = "<p>Number not found in blocklist</p>";
