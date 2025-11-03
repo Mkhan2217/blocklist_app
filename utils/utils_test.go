@@ -13,6 +13,7 @@ func TestFormatPhoneNumber(t *testing.T) {
 		{"abc1234567890xyz", "+1234567890"},
 		{"", ""},
 	}
+	
 
 	for _, tt := range tests {
 		got := FormatPhoneNumber(tt.input)
