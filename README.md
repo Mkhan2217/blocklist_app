@@ -192,17 +192,6 @@ Maps `/static/*` → `static/` folder.
 
 ---
 
-## 📌 **Future Enhancements**
-
-| Feature               | Status    |
-| --------------------- | --------- |
-| JWT Auth              | ⏳ Planned |
-| Admin Dashboard       | ⏳         |
-| Redis Cache           | ⏳         |
-| Cloud-ready migration | ⏳         |
-
----
-
 ## 🧑‍💻 **Author**
 
 **Muzaffar Khan**
