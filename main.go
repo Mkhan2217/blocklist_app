@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/Mkhan2217/blocklist_app/db"
-	"github.com/Mkhan2217/blocklist_app/routes"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
+	"github.com/Mkhan2217/blocklist_app/db"
+	"github.com/Mkhan2217/blocklist_app/routes"
 )
 
 func main() {
@@ -20,13 +25,48 @@ func main() {
 	}
 	fmt.Println("✅ Database initialized")
 
-	// Register routes
-	routes.RegisterRoutes()
+		// Create HTTP request multiplexer
+	mux := http.NewServeMux()
 
-	// Serve static files
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	// Register all API routes
+	routes.RegisterRoutes(mux)
+	// Serve static files through mux
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	fmt.Println("🚀 Server running at http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	// // Serve static files
+	// fs := http.FileServer(http.Dir("static"))
+	// http.Handle("/static/", http.StripPrefix("/static/", fs))
+
+// Create HTTP server
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	// Channel to listen for OS interrupt signals
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	// Start server in a separate goroutine
+	go func() {
+		log.Println("🚀 Server running on http://localhost:8080")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("❌ Server error: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	<-stop
+	log.Println("⚠️  Shutting down server...")
+
+	// Create context with timeout for graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("❌ Server forced to shutdown: %v", err)
+	}
+
+	log.Println("✅ Server stopped gracefully")
 }

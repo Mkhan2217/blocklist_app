@@ -1,34 +1,18 @@
-package main
+package config
 
 import "os"
 
-func DBUser() string {
-	if v := os.Getenv("CHECKGUARD_DB_USER"); v != "" {
+// getEnv returns the value of the environment variable key or defaultVal if not set
+func getEnv(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
 		return v
 	}
-	return "postgres"
+	return defaultVal
 }
-func DBPassword() string {
-	if v := os.Getenv("CHECKGUARD_DB_PASSWORD"); v != "" {
-		return v
-	}
-	return "rizzu"
-}
-func DBName() string {
-	if v := os.Getenv("CHECKGUARD_DB_NAME"); v != "" {
-		return v
-	}
-	return "blocklistdb"
-}
-func DBHost() string {
-	if v := os.Getenv("CHECKGUARD_DB_HOST"); v != "" {
-		return v
-	}
-	return "localhost"
-}
-func DBPort() string {
-	if v := os.Getenv("CHECKGUARD_DB_PORT"); v != "" {
-		return v
-	}
-	return "5432"
-}
+
+// Database configuration
+func DBUser() string     { return getEnv("CHECKGUARD_DB_USER", "postgres") }
+func DBPassword() string { return getEnv("CHECKGUARD_DB_PASSWORD", "rizzu") }
+func DBName() string     { return getEnv("CHECKGUARD_DB_NAME", "blocklistdb") }
+func DBHost() string     { return getEnv("CHECKGUARD_DB_HOST", "localhost") }
+func DBPort() string     { return getEnv("CHECKGUARD_DB_PORT", "5432") }

@@ -14,4 +14,3 @@ CREATE TABLE IF NOT EXISTS blocked_numbers (
 );
 
 CREATE INDEX IF NOT EXISTS idx_phone_number ON blocked_numbers(phone_number);
-CREATE INDEX IF NOT EXISTS idx_store_location ON blocked_numbers(store_location);

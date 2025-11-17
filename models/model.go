@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/Mkhan2217/blocklist_app/db"
@@ -16,7 +15,7 @@ type BlockedNumber struct {
 	StoreLocation string
 	IncidentDate  string
 	CreatedAt     string
-	CheckAmount   sql.NullFloat64
+	CheckAmount   float64
 	Notes         string
 }
 
@@ -34,23 +33,8 @@ type BlockedNumberResponse struct {
 }
 
 /* ------------- Convert DB Model → API Response DTO  -------- */
-
 func (b BlockedNumber) ToResponse() BlockedNumberResponse {
-	var amount float64
-	if b.CheckAmount.Valid {
-		amount = b.CheckAmount.Float64
-	}
-
-	return BlockedNumberResponse{
-		ID:            b.ID,
-		PhoneNumber:   b.PhoneNumber,
-		Reason:        b.Reason,
-		StoreLocation: b.StoreLocation,
-		IncidentDate:  b.IncidentDate,
-		CreatedAt:     b.CreatedAt,
-		CheckAmount:   amount,
-		Notes:         b.Notes,
-	}
+return BlockedNumberResponse(b)
 }
 
 /* --------------------------  DB Queries  ---------------------------------- */
@@ -68,7 +52,9 @@ func GetAllBlockedNumbers() ([]BlockedNumber, error) {
 	var numbers []BlockedNumber
 	for rows.Next() {
 		var n BlockedNumber
-		rows.Scan(&n.ID, &n.PhoneNumber, &n.CreatedAt)
+		if err := rows.Scan(&n.ID, &n.PhoneNumber, &n.CreatedAt); err != nil {
+			return nil, err
+		}
 		numbers = append(numbers, n)
 	}
 	return numbers, nil

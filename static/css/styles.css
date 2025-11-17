@@ -203,3 +203,36 @@ input.invalid-input {
     text-align: left;
   }
 }
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+}
+
+.toast {
+  padding: 12px 18px;
+  margin-top: 10px;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 500;
+  animation: fadeInOut 3s ease forwards;
+}
+
+.toast-success {
+  background: #28a745;
+}
+.toast-error {
+  background: #dc3545;
+}
+.toast-warning {
+  background: #ffc107;
+  color: #000;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}

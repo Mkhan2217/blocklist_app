@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/Mkhan2217/blocklist_app/config"
 	_ "github.com/lib/pq"
 )
 
@@ -20,14 +21,15 @@ func envOr(key, def string) string {
 }
 
 func ConnectDB() error {
-	user := envOr("CHECKGUARD_DB_USER", "postgres")
-	pass := envOr("CHECKGUARD_DB_PASSWORD", "rizzu")
-	name := envOr("CHECKGUARD_DB_NAME", "blocklistdb")
-	host := envOr("CHECKGUARD_DB_HOST", "localhost")
-	port := envOr("CHECKGUARD_DB_PORT", "5432")
-
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, pass, name)
+	// Build DSN from config
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		config.DBHost(),
+		config.DBPort(),
+		config.DBUser(),
+		config.DBPassword(),
+		config.DBName(),
+	)
 
 	var err error
 	DB, err = sql.Open("postgres", dsn)
@@ -48,15 +50,20 @@ func ConnectDB() error {
 	return nil
 }
 
+// CloseDB safely closes the database connection
 func CloseDB() {
 	if DB != nil {
-		_ = DB.Close()
+		if err := DB.Close(); err != nil {
+			log.Printf("⚠️  Error closing DB: %v", err)
+		} else {
+			log.Println("✅ Database connection closed")
+		}
 	}
 }
 
 // Schema initialization
 func InitSchema() error {
-	sql := `
+	schema := `
 	CREATE TABLE IF NOT EXISTS blocked_numbers (
 		id SERIAL PRIMARY KEY,
 		phone_number VARCHAR(15) UNIQUE NOT NULL CHECK (phone_number ~ '^\+[1-9][0-9]{9,14}$'),
@@ -69,7 +76,11 @@ func InitSchema() error {
 		updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 	);
 	CREATE INDEX IF NOT EXISTS idx_phone_number ON blocked_numbers(phone_number);
-	CREATE INDEX IF NOT EXISTS idx_store_location ON blocked_numbers(store_location);`
-	_, err := DB.Exec(sql)
-	return err
+`
+	if _, err := DB.Exec(schema); err != nil {
+		return fmt.Errorf("failed to initialize schema: %w", err)
+	}
+
+	log.Println("✅ Database schema initialized")
+	return nil
 }

@@ -6,8 +6,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/Mkhan2217/blocklist_app/models"
 	"github.com/Mkhan2217/blocklist_app/utils"
@@ -41,49 +39,49 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, numbers)
 }
 
-/* ----------------------- ADD BLOCKED NUMBER ----------------------- */
+/* ------------------ POST: Block or Update Number ------------------ */
 
-func AddNumberHandler(w http.ResponseWriter, r *http.Request) {
+func CreateOrUpdateBlockedNumber(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	number := models.BlockedNumber{
-		PhoneNumber:   utils.FormatPhoneNumber(r.FormValue("phone_number")),
-		Reason:        strings.TrimSpace(r.FormValue("reason")),
-		StoreLocation: strings.TrimSpace(r.FormValue("store_location")),
-		Notes:         r.FormValue("notes"),
+	var number models.BlockedNumber
+	if err := json.NewDecoder(r.Body).Decode(&number); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid JSON payload")
+		return
 	}
 
-	checkAmount := strings.TrimSpace(r.FormValue("check_amount"))
-
-	if number.PhoneNumber == "" || !utils.ValidatePhoneNumber(number.PhoneNumber) ||
-		number.Reason == "" || number.StoreLocation == "" || checkAmount == "" {
+	// Validation
+	if number.PhoneNumber == "" ||
+		!utils.ValidatePhoneNumber(number.PhoneNumber) ||
+		number.Reason == "" ||
+		number.StoreLocation == "" ||
+		number.CheckAmount <= 0 { // float64 works now
 		writeError(w, http.StatusBadRequest, "Required fields missing or invalid")
 		return
 	}
 
-	amount, err := strconv.ParseFloat(checkAmount, 64)
-	if err != nil || amount <= 0 {
-		writeError(w, http.StatusBadRequest, "Invalid check amount")
-		return
-	}
-
-	number.CheckAmount = sql.NullFloat64{Float64: amount, Valid: true}
+	number.PhoneNumber = utils.FormatPhoneNumber(number.PhoneNumber)
 
 	if err := models.UpsertBlockedNumber(number); err != nil {
-		log.Println("DB insert error:", err)
+		log.Println("DB Upsert error:", err)
 		writeError(w, http.StatusInternalServerError, "Database error")
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Number blocked"})
 }
 
-/* ----------------------- SEARCH BLOCKED NUMBER API ----------------------- */
+/* ---------------------- GET: Search Number ------------------------ */
 
-func SearchHandler(w http.ResponseWriter, r *http.Request) {
+func GetBlockedNumberHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
 	phone := utils.FormatPhoneNumber(r.URL.Query().Get("phone"))
 	if phone == "" {
 		writeError(w, http.StatusBadRequest, "Phone number required")
@@ -94,7 +92,9 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	if err == sql.ErrNoRows {
 		writeError(w, http.StatusNotFound, "Number not found")
 		return
-	} else if err != nil {
+	}
+	if err != nil {
+		log.Println("DB query error:", err)
 		writeError(w, http.StatusInternalServerError, "Database error")
 		return
 	}
@@ -102,7 +102,7 @@ func SearchHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, record.ToResponse())
 }
 
-/* ----------------------- UNBLOCK API ----------------------- */
+/* --------------------- DELETE: Unblock Number --------------------- */
 
 func UnblockNumberHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
@@ -117,9 +117,10 @@ func UnblockNumberHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := models.DeleteBlockedNumber(phone); err != nil {
+		log.Println("DB delete error:", err)
 		writeError(w, http.StatusInternalServerError, "Database error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"message": "Unblocked"})
+	writeJSON(w, http.StatusOK, map[string]string{"message": "Number unblocked"})
 }
