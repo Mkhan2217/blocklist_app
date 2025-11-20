@@ -1,153 +1,138 @@
-## 📛 *CheckGuard – Fraud Phone Blocklist System**
+# 📛 CheckGuard – Fraud Phone Blocklist System
 
-A Go-based system to help retail stores verify and block fraudulent phone numbers used in suspicious check-cashing activities.
-
-Built to prevent fraud by maintaining a centralized blocklist with full audit details.
-
----
-
-## 🚀 **Features**
-
-| Category            | Details                                                  |
-| ------------------- | -------------------------------------------------------- |
-| Block Fraud Numbers | Add & block suspicious phone numbers                     |
-| Search              | Search by phone number, store location                   |
-| Validation          | Strict E.164 phone format validation using DB CHECK rule |
-| Audit               | Tracks incident date, notes, timestamps                  |
-| UI                  | Simple HTML-based front-end for store clerks             |
-| Persistence         | PostgreSQL storage                                       |
-| REST APIs           | JSON CRUD APIs                                           |
-| Testing             | Unit test coverage for handlers & DB layer               |
-| Folder Structure    | Clean MVC-style architecture                             |
+A Go-based system for retail stores to verify and block fraudulent phone numbers used in suspicious check-cashing activities.
+Prevents fraud by maintaining a centralized blocklist with full audit logging.
 
 ---
 
-## 🧠 **Tech Stack**
+## 🚀 Features
 
-| Layer        | Technology                             |
-| ------------ | -------------------------------------- |
-| Backend      | Go (net/http)                          |
-| Database     | PostgreSQL                             |
-| DB Migration | Custom schema loader (`db/schema.sql`) |
-| Tests        | Go testing package (`testing`)         |
-| Frontend     | HTML, CSS, JS (basic)                  |
+| Category            | Details                                           |
+| ------------------- | ------------------------------------------------- |
+| Block Fraud Numbers | Add & block suspicious phone numbers              |
+| Search              | Search by phone number or store location          |
+| Validation          | Strict E.164 phone format validation (`DB CHECK`) |
+| Audit               | Tracks incident date, notes, timestamps           |
+| UI                  | Simple HTML front-end for store clerks            |
+| Persistence         | PostgreSQL storage                                |
+| REST APIs           | JSON CRUD APIs                                    |
+| Testing             | Unit tests for handlers & utils                   |
+| Structure           | Clean MVC-style architecture                      |
 
 ---
 
-## 📁 **Project Structure**
+## 🧠 Tech Stack
+
+| Layer    | Technology                             |
+| -------- | -------------------------------------- |
+| Backend  | Go 1.20+ (net/http)                    |
+| Database | PostgreSQL 14+                         |
+| Frontend | HTML, CSS, JS (basic)                  |
+| Testing  | Go `testing` package                   |
+| DB Setup | Custom schema loader (`db/schema.sql`) |
+
+---
+
+## 📁 Project Structure
 
 ```
-blocklist_app/
+BLOCKLIST_APP/
 ├── main.go
 ├── go.mod
-├── routes/
-│   └── routes.go
-├── handlers/
-│   └── handlers.go
-├── db/
-│   ├── db.go
-│   └── schema.sql
-├── models/
-│   └── blocked_number.go
+├── go.sum
+├── internal/
+│   ├── api/
+│   │   ├── handlers/handlers.go
+│   │   └── routes/routes.go
+│   ├── config/config.go
+│   ├── db/
+│   │   ├── db.go
+│   │   └── schema.sql
+│   ├── models/model.go
+│   └── utils/
+│       ├── utils_test.go
+│       └── validators.go
 ├── static/
-│   ├── index.html
-│   └── style.css
-└── tests/
-    └── handlers_test.go
+│   ├── css/
+│   ├── js/
+│   └── templates/
+├── package.json   # Optional, frontend deps
+└── README.md
 ```
 
 ---
 
-## 🗃️ **Database Schema**
+## 🗃️ Database Schema
 
-Schema file location: `db/schema.sql`
+**Table: blocked_numbers**
 
-Key rules included:
+| Column                  | Description           |
+| ----------------------- | --------------------- |
+| id                      | Primary key           |
+| phone_number            | E.164 format (unique) |
+| reason                  | Fraud reason          |
+| store_location          | City/store ID         |
+| incident_date           | Date of incident      |
+| check_amount            | Amount on check       |
+| notes                   | Additional notes      |
+| created_at / updated_at | Audit timestamps      |
 
-✔ `CHECK (phone_number ~ '^\+[1-9][0-9]{9,14}$')`
-✔ Prevents invalid numbers
-✔ Prevents numbers starting with +0
-✔ Indexes for fast search
+**Key rules**:
 
-Table: `blocked_numbers`
-
-| Column                  | Description               |
-| ----------------------- | ------------------------- |
-| id                      | Primary key               |
-| phone_number            | E.164 format (unique)     |
-| reason                  | Fraud reason              |
-| store_location          | City/store ID             |
-| incident_date           | When fraud occurred       |
-| check_amount            | Amount on presented check |
-| notes                   | Additional notes          |
-| created_at / updated_at | Audit                     |
+* `CHECK (phone_number ~ '^\+[1-9][0-9]{9,14}$')`
+* Prevents invalid numbers and numbers starting with +0
+* Indexed for fast search
 
 ---
 
-## 🏗️ **Architecture Flow**
+## ⚙️ Setup & Installation
 
-```
-User → UI Form → HTTP Request → Router → Handler → DB Layer → PostgreSQL
-```
-
----
-
-## ⚙️ **Setup & Installation**
-
-### ✅ Prerequisite
+### Prerequisites
 
 * Go 1.20+
 * PostgreSQL 14+
 * Git
 
-### ✅ Clone Repo
+### Clone Repo
 
-```sh
-git clone https://github.com/yourname/blocklist_app.git
+```bash
+git clone https://github.com/Mkhan2217/blocklist_app
 cd blocklist_app
 ```
 
-### ✅ DB Setup
-
-Create DB:
+### Database Setup
 
 ```sql
-CREATE DATABASE checkguard;
+CREATE DATABASE blocklistdb;
 ```
 
-### ✅ Configure DB Env
+Update connection in `internal/db/db.go`:
 
-Edit in `db/db.go`:
-
-```
-postgres://postgres:YOUR_PASSWORD@localhost:5432/checkguard?sslmode=disable
+```go
+postgres://postgres:YOUR_PASSWORD@localhost:5432/blocklistdb?sslmode=disable
 ```
 
-### ✅ Install Dependencies
+### Install Dependencies
 
-```sh
+```bash
 go mod tidy
 ```
 
-### ✅ Run App
+### Run App
 
-```sh
+```bash
 go run main.go
 ```
 
-Visit UI:
-
-```
-http://localhost:8080
-```
+Visit: `http://localhost:8080`
 
 ---
 
-## 📡 **API Endpoints**
+## 📡 API Endpoints
 
 ### ➕ Add Blocked Number
 
-`POST /block`
+`POST /block` (JSON, Content-Type: application/json)
 
 ```json
 {
@@ -169,9 +154,7 @@ http://localhost:8080
 
 ---
 
-## 🧩 **Static File Handling**
-
-Served via Go:
+## 🧩 Static Files
 
 ```go
 fs := http.FileServer(http.Dir("static"))
@@ -182,24 +165,14 @@ Maps `/static/*` → `static/` folder.
 
 ---
 
-## ✅ **Key Security & Validation Rules**
+## ✅ Security & Validation
 
-* DB-level phone validation
-* Prevents invalid entries
-* Logs & audit timestamps
-* Unique index on phone numbers
+* DB-level phone validation & unique index
+* Audit timestamps
 * Server-side input validation
 
 ---
 
-## 🧑‍💻 **Author**
+## 🧑‍💻 Author
 
 **Muzaffar Khan**
-
----
-
-## ⭐ **Contribute**
-
-Pull Requests welcome. Open issues for suggestions.
-
----
