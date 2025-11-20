@@ -4,21 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
-	"github.com/Mkhan2217/blocklist_app/config"
+	"github.com/Mkhan2217/blocklist_app/internal/config"
 	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
-
-func envOr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
 
 func ConnectDB() error {
 	// Build DSN from config

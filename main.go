@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/Mkhan2217/blocklist_app/db"
-	"github.com/Mkhan2217/blocklist_app/routes"
+	"github.com/Mkhan2217/blocklist_app/internal/api/routes"
+	"github.com/Mkhan2217/blocklist_app/internal/db"
 )
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 	}
 	fmt.Println("✅ Database initialized")
 
-		// Create HTTP request multiplexer
+	// Create HTTP request multiplexer
 	mux := http.NewServeMux()
 
 	// Register all API routes
@@ -33,12 +33,7 @@ func main() {
 	// Serve static files through mux
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-
-	// // Serve static files
-	// fs := http.FileServer(http.Dir("static"))
-	// http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-// Create HTTP server
+	// Create HTTP server
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: mux,

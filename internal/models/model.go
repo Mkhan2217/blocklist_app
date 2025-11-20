@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	"github.com/Mkhan2217/blocklist_app/db"
+	"github.com/Mkhan2217/blocklist_app/internal/db"
 )
 
 /* --------------------------  DB Model (internal)  -------------------------- */

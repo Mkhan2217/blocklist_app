@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/Mkhan2217/blocklist_app/models"
-	"github.com/Mkhan2217/blocklist_app/utils"
+	"github.com/Mkhan2217/blocklist_app/internal/models"
+	"github.com/Mkhan2217/blocklist_app/internal/utils"
 )
 
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
@@ -24,7 +24,7 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 /* ----------------------- HOME PAGE RENDER ----------------------- */
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.ParseFiles("templates/index.html")
+	tmpl, err := template.ParseFiles("static/templates/index.html")
 	if err != nil {
 		http.Error(w, "Template error", http.StatusInternalServerError)
 		return

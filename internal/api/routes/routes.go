@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Mkhan2217/blocklist_app/handlers"
+	"github.com/Mkhan2217/blocklist_app/internal/api/handlers"
 )
 
 func RegisterRoutes(mux *http.ServeMux) {

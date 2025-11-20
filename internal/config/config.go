@@ -12,7 +12,7 @@ func getEnv(key, defaultVal string) string {
 
 // Database configuration
 func DBUser() string     { return getEnv("CHECKGUARD_DB_USER", "postgres") }
-func DBPassword() string { return getEnv("CHECKGUARD_DB_PASSWORD", "rizzu") }
+func DBPassword() string { return getEnv("CHECKGUARD_DB_PASSWORD", "root") }
 func DBName() string     { return getEnv("CHECKGUARD_DB_NAME", "blocklistdb") }
 func DBHost() string     { return getEnv("CHECKGUARD_DB_HOST", "localhost") }
 func DBPort() string     { return getEnv("CHECKGUARD_DB_PORT", "5432") }
