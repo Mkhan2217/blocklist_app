@@ -240,3 +240,17 @@ function resetSearchBox() {
     resultBox.style.display = "none";
   }
 }
+// Export for Jest testing
+if (typeof module !== "undefined") {
+  module.exports = {
+    formatPhoneNumber,
+    validatePhoneNumber,
+    searchPhone,
+    handleBlockSubmit,
+    unblockNumber,
+    formatUSADate,
+    validatePhoneInput,
+    resetSearchBox,
+    showToast,
+  };
+}
