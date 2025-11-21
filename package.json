@@ -11,7 +11,7 @@
   "jest": {
     "testEnvironment": "jsdom",
     "setupFiles": [
-      "./static/js/test-setup.js"
+      "<rootDir>/static/js/test-setup.js"
     ]
   }
 }

@@ -1,0 +1,45 @@
+# Go build artifacts
+/bin/
+/obj/
+/*.exe
+/*.exe~
+/*.dll
+/*.so
+/*.dylib
+
+# Go test binaries
+*.test
+
+# Go vendor folder
+/vendor/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Node dependencies
+node_modules/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Coverage
+coverage/
+*.out
+
+# Build directories
+/dist/
+/build/
+/tmp/
